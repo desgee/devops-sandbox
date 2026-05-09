@@ -1,0 +1,31 @@
+# ── Secrets ───────────────────────────────────────────────────────────────────
+.env
+
+# ── Runtime state (gitignored; kept alive by .gitkeep) ───────────────────────
+envs/*.json
+logs/**/*.log
+logs/**/*.pid
+logs/archived/*/
+
+# ── Nginx auto-generated per-env configs ─────────────────────────────────────
+nginx/conf.d/env-*.conf
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# ── Editor / OS ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

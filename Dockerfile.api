@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install Docker CLI for running shell scripts
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    bash \
+    docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python deps
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy platform scripts
+COPY platform/ ./platform/
+
+# Ensure scripts are executable
+RUN chmod +x /app/platform/*.sh
+
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python3", "/app/platform/api.py"]

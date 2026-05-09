@@ -1,0 +1,97 @@
+version: "3.9"
+
+# devops-sandbox platform services
+# Run with: docker compose up -d
+# Or via: make up
+
+networks:
+  sandbox-nginx-net:
+    name: sandbox-nginx-net
+    driver: bridge
+
+services:
+
+  # ── Nginx — front door for all environments ──────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: sandbox-nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - sandbox-nginx-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/nginx-health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    labels:
+      sandbox.type: infrastructure
+      sandbox.name: nginx
+
+  # ── Control API ───────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: sandbox-api:latest
+    container_name: sandbox-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-7000}:7000"
+    volumes:
+      - ./platform:/app/platform
+      - ./envs:/app/envs
+      - ./logs:/app/logs
+      - ./nginx/conf.d:/app/nginx/conf.d
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - API_PORT=7000
+    networks:
+      - sandbox-nginx-net
+    depends_on:
+      - nginx
+    labels:
+      sandbox.type: infrastructure
+      sandbox.name: api
+
+  # ── Cleanup Daemon ────────────────────────────────────────────────────────
+  daemon:
+    image: docker:24-cli
+    container_name: sandbox-daemon
+    restart: unless-stopped
+    volumes:
+      - ./platform:/app/platform
+      - ./envs:/app/envs
+      - ./logs:/app/logs
+      - ./nginx/conf.d:/app/nginx/conf.d
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: ["sh", "-c", "apk add --no-cache bash python3 > /dev/null 2>&1 && bash /app/platform/cleanup_daemon.sh"]
+    environment:
+      ROOT_DIR: /app
+    networks:
+      - sandbox-nginx-net
+    labels:
+      sandbox.type: infrastructure
+      sandbox.name: daemon
+
+  # ── Health Monitor ────────────────────────────────────────────────────────
+  monitor:
+    image: python:3.11-slim
+    container_name: sandbox-monitor
+    restart: unless-stopped
+    volumes:
+      - ./monitor:/app/monitor
+      - ./envs:/app/envs
+      - ./logs:/app/logs
+    # Use host network so it can reach env containers by localhost:port
+    network_mode: host
+    entrypoint: ["python3", "/app/monitor/health_monitor.py"]
+    environment:
+      ROOT_DIR: /app
+    labels:
+      sandbox.type: infrastructure
+      sandbox.name: monitor

@@ -1,0 +1,3 @@
+# Runtime logs directory — gitignored.
+# Subdirectories created per-environment at runtime.
+# logs/cleanup.log written by cleanup_daemon.sh.

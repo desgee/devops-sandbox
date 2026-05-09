@@ -1,0 +1,57 @@
+version: "3.9"
+
+# Optional monitoring stack — Netdata
+# Usage:
+#   make monitoring-up    # start
+#   make monitoring-down  # stop
+#
+# Dashboard: http://localhost:19999
+# Auto-discovers all sandbox containers — no config needed.
+
+networks:
+  sandbox-nginx-net:
+    external: true
+
+services:
+  netdata:
+    image: netdata/netdata:latest
+    container_name: sandbox-netdata
+    restart: unless-stopped
+    ports:
+      - "${NETDATA_PORT:-19999}:19999"
+    # Required capabilities for full system metrics
+    cap_add:
+      - SYS_PTRACE
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    volumes:
+      # Docker socket — lets Netdata auto-discover and monitor all containers
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Host proc/sys — for real system-level metrics
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      # Persist collected metrics across restarts
+      - netdata-lib:/var/lib/netdata
+      - netdata-cache:/var/cache/netdata
+      # Optional: custom netdata config (see monitor/netdata/)
+      - ./monitor/netdata/netdata.conf:/etc/netdata/netdata.conf:ro
+    environment:
+      - NETDATA_CLAIM_TOKEN=
+      - NETDATA_CLAIM_URL=
+      - DO_NOT_TRACK=1
+    networks:
+      - sandbox-nginx-net
+    labels:
+      sandbox.type: infrastructure
+      sandbox.name: netdata
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:19999/api/v1/info"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  netdata-lib:
+  netdata-cache:
