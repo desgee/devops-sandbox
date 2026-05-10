@@ -592,7 +592,7 @@ make health
 
 ## 12. Optional — Netdata Dashboard
 
-Netdata gives you a live visual dashboard of every container's CPU, memory, network I/O, and disk — with zero configuration. It auto-discovers sandbox containers the moment they start.
+Netdata gives you a live visual dashboard of every container's CPU, memory, network I/O, and disk — with zero configurration. It auto-discovers sandbox containers the moment they start.
 
 ### Start
 
