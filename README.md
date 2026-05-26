@@ -1,6 +1,6 @@
 # devops-sandbox
 
-A self-service platform for spinning up isolated temporary environments, deploying apps, simulating outages, monitoring health, and auto-destroying everything. Think miniature internal Heroku with a chaos engineering toggle.
+A self-service platform for spinning up isolated temporary environments, deploying apps, simulating outages, monitoring health, and auto-destroying everything. Think miniature internal Heroku.
 
 Every environment is short-lived by design.
 
